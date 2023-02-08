@@ -6,7 +6,7 @@ from .models import User
 
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для модели User."""
-    is_subscribed = SerializerMethodField('is_subscribed_user')
+    is_subscribed = SerializerMethodField()
 
     class Meta:
         model = User
@@ -17,7 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True, 'required': True},
         }
 
-    def is_subscribed_user(self, obj):
+    def get_is_subscribed(self, obj):
         """
 Проверяет подписан ли пользователь
         :param obj: User
