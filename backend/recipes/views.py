@@ -1,3 +1,24 @@
-from django.shortcuts import render
+from rest_framework.viewsets import ModelViewSet
 
-# Create your views here.
+from .filters import IngredientFilter
+from .models import Ingredient, Recipe, Tag
+from .serializers import IngredientSerializer, TagSerializer
+
+
+class TagViewSet(ModelViewSet):
+    """Отображение модели Tag."""
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+
+
+class IngredientViewSet(ModelViewSet):
+    """Отображение модели Ingredient."""
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    filter_backends = IngredientFilter
+    search_fields = ('^name',)
+
+
+class RecipeViewSet(ModelViewSet):
+    """Отображение модели Recipes."""
+    pass

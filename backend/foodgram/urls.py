@@ -1,9 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
 
 api = [
     path('', include('users.urls', namespace='users')),
-    # path('', include('recipes.urls', namespace='recipes')),
+    path('', include('recipes.urls', namespace='recipes')),
 ]
 
 urlpatterns = [
