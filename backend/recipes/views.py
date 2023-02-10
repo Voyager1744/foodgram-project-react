@@ -15,7 +15,7 @@ class IngredientViewSet(ModelViewSet):
     """Отображение модели Ingredient."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = IngredientFilter
+    # filter_backends = IngredientFilter  #TODO добавить фильтр
     search_fields = ('^name',)
 
 
