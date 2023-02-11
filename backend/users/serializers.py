@@ -24,4 +24,4 @@ class UserSerializer(serializers.ModelSerializer):
         :return: True or False
         """
         user = self.context['request'].user
-        return user.is_authenticated  # Дописать условие подписки!
+        return user.is_authenticated  # TODO Дописать условие подписки!
