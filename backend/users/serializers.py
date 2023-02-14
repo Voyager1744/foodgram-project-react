@@ -1,7 +1,8 @@
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from .models import User
+from .models import User, Follow
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,10 +19,16 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def get_is_subscribed(self, obj):
-        """
-Проверяет подписан ли пользователь
-        :param obj: User
-        :return: True or False
-        """
-        user = self.context['request'].user
-        return user.is_authenticated  # TODO Дописать условие подписки!
+        """Проверяет подписан ли пользователь."""
+        request = self.context.get('request')
+        if not request or request.user.is_anonymous:
+            return False
+        return Follow.objects.filter(
+            user=request.user, author=obj
+        ).exists()
+
+    def create(self, validated_data):
+        validated_data['password'] = (
+            make_password(validated_data.pop('password'))
+        )
+        return super().create(validated_data)
