@@ -33,79 +33,49 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        ordering = ['name']
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
 
 
-class IngredientInRecipe(models.Model):
-    """Количество продуктов в рецепте."""
-    ingredient: Ingredient = models.ForeignKey(
-        Ingredient,
-        on_delete=models.CASCADE,
-        related_name='ingredients_in_recipe',
-        verbose_name='Продукты в рецепте'
-    )
-    amount: int = models.IntegerField(
-        verbose_name='Количество продукта',
-        default=MIN_AMOUNT,
-        validators=[MinValueValidator(
-            MIN_AMOUNT,
-            message=f'Количество продукта должно быть больше {MIN_AMOUNT}')
-        ],
-    )
-
-    recipes = models.ForeignKey('Recipe',
-                                on_delete=models.CASCADE,
-                                verbose_name='Рецепты',
-                                )
-
-    class Meta:
-        verbose_name = 'Количество продукта в рецепте'
-        verbose_name_plural = 'Количество продуктов в рецепте'
-        constraints = (
-            models.UniqueConstraint(  # FIXME поправить ограничения!
-                fields=('recipes', 'ingredient',),
-                name='unique_amount_ingredients'
-            ),
-        )
-
-    def __str__(self):
-        return (
-            f'{self.ingredient.name} - {self.amount}'
-            f' ({self.ingredient.measurement_unit})'
-        )
-
-
 class Recipe(models.Model):
     """Модель для рецепта"""
-    tags: Tag = models.ManyToManyField(Tag,
-                                       related_name='recipes',
-                                       verbose_name='Теги'
-                                       )
-    author: User = models.ForeignKey(User,
-                                     on_delete=models.CASCADE,
-                                     related_name='recipes',
-                                     verbose_name='Автор рецепта'
-                                     )
-    ingredients = models.ManyToManyField(Ingredient,
-                                         through=IngredientInRecipe,
-                                         related_name='recipes',
-                                         verbose_name='Ингредиенты рецепта')
-    is_favorited: bool = models.BooleanField('В избранном')
-    is_in_shopping_cart: bool = models.BooleanField('В корзине')
-    name: str = models.CharField('Название рецепта', max_length=200)
-    image = models.ImageField('Фото',
-                              null=True,
-                              default=None,
-                              upload_to='recipes/images/'
-                              )
-    text: str = models.TextField('Описание')
+    tags: Tag = models.ManyToManyField(
+        Tag,
+        verbose_name='Теги'
+    )
+    author: User = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор рецепта'
+    )
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='IngredientInRecipe',
+        related_name='recipes',
+        verbose_name='Ингредиенты рецепта'
+    )
+    name: str = models.CharField(
+        'Название рецепта',
+        max_length=200
+    )
+    image = models.ImageField(
+        'Фото',
+        blank=True,
+        default=None,
+        upload_to='recipes/images/'
+    )
+    text: str = models.TextField(
+        'Описание'
+    )
     cooking_time: int = models.PositiveSmallIntegerField(
         'Время приготовления, мин',
-        validators=[MinValueValidator(
-            MIN_COOKING_TIME,
-            message=f'Время должно быть больше {MIN_COOKING_TIME}')
+        validators=[
+            MinValueValidator(
+                MIN_COOKING_TIME,
+                message=f'Время должно быть больше {MIN_COOKING_TIME}'
+            )
         ],
         default=MIN_COOKING_TIME
     )
@@ -117,3 +87,78 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class IngredientInRecipe(models.Model):
+    """Количество продуктов в рецепте."""
+    ingredient: Ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name='Продукты в рецепте'
+    )
+    amount: int = models.PositiveIntegerField(
+        verbose_name='Количество продукта',
+        validators=[
+            MinValueValidator(
+                MIN_AMOUNT,
+                message=f'Количество продукта должно быть больше {MIN_AMOUNT}'
+            )
+        ],
+        default=MIN_AMOUNT
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт'
+    )
+
+    class Meta:
+        default_related_name = 'ingredients_in_recipe'
+        constraints = (
+            models.UniqueConstraint(fields=('recipe', 'ingredient',),
+                                    name='unique_amount_ingredients'),)
+        verbose_name = 'Количество продукта в рецепте'
+        verbose_name_plural = 'Количество продуктов в рецепте'
+
+    def __str__(self):
+        return f'{self.recipe}: {self.ingredient} – {self.amount}'
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        related_name='is_favorited',
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        ordering = ('user',)
+        verbose_name = 'Избранное'
+        default_related_name = 'favorites'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_favorites',
+            ),
+        )
+
+
+class ShoppingCart(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        verbose_name = 'Корзина'
+        constraints = (models.UniqueConstraint(fields=('user', 'recipe'),
+                                               name='unique_cart', ),
+                       )

@@ -1,6 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
 
-from .filters import IngredientFilter
 from .models import Ingredient, Recipe, Tag
 from .serializers import IngredientSerializer, TagSerializer, RecipeSerializer
 

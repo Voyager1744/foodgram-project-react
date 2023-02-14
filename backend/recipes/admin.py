@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Ingredient, IngredientInRecipe, Recipe, Tag
+from .models import Ingredient, IngredientInRecipe, Recipe, ShoppingCart, Tag
 
 
 class IngredientRecipeInline(admin.TabularInline):
@@ -11,11 +11,14 @@ class IngredientRecipeInline(admin.TabularInline):
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = (
-        'pk',
+        'id',
         'name',
         'color',
-        'slug',
+        'slug'
     )
+    list_display_links = ('name',)
+    search_fields = ('name',)
+    list_filter = ('name',)
 
 
 @admin.register(Ingredient)
@@ -23,40 +26,53 @@ class IngredientAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'name',
-        'measurement_unit',
+        'measurement_unit'
     )
     ordering = ('name',)
+    list_display_links = ('name',)
+    search_fields = ('name',)
+    list_filter = ('name',)
 
 
 @admin.register(IngredientInRecipe)
 class IngredientInRecipeAdmin(admin.ModelAdmin):
     list_display = (
         'id',
+        'recipe',
         'ingredient',
-        'amount',
-        'recipes',
+        'amount'
     )
-    list_display_links = ('recipes',)
+    list_filter = ('recipe', 'ingredient')
 
 
 # TODO дописать сортировки
+
+class IngredientsInline(admin.TabularInline):
+    model = Ingredient
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        'author',
-        'is_favorited',
         'name',
-        'tag_in_recipe',  # FIXME
-        # 'image',
-        # 'text',
-        'cooking_time',
+        'author',
+        'is_favorited'
     )
     list_display_links = ('name',)
     search_fields = ('name',)
+    list_filter = ('author', 'name', 'tags')
+    readonly_fields = ('is_favorited',)
     inlines = (IngredientRecipeInline,)
 
-    def tag_in_recipe(self, obj):  # FIXME
-        return obj.tags.all()
+    def is_favorited(self, obj):
+        return obj.is_favorited.all().count()
+
+    is_favorited.short_description = 'Количество в избранном'
+
+
+@admin.register(ShoppingCart)
+class ShoppingCartAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'user')
+    list_filter = ('recipe', 'user')
+    search_fields = ('user',)
