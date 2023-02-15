@@ -13,3 +13,4 @@ sqlparse==0.4.3
 djangorestframework==3.12.4
 Pillow==9.4.0
 django-filter==21.1
+drf_base64==2.0

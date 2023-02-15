@@ -8,6 +8,7 @@ class TagViewSet(ModelViewSet):
     """Отображение модели Tag."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
 
 
 class IngredientViewSet(ModelViewSet):

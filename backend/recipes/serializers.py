@@ -1,4 +1,6 @@
+from django.db import transaction
 from rest_framework import serializers
+from drf_base64.fields import Base64ImageField
 
 from .models import (Tag, Ingredient, Recipe, IngredientInRecipe, Favorite,
                      ShoppingCart)
@@ -21,7 +23,7 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
-class IngredientInResipeSerializer(serializers.ModelSerializer):
+class IngredientInRecipeSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         source='ingredient',
         read_only=True
@@ -39,7 +41,7 @@ class IngredientInResipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IngredientInRecipe
-        fields = ('id', 'measurement_unit', 'name', 'amount',)
+        fields = ('id', 'name', 'measurement_unit', 'amount',)
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -47,7 +49,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author = UserSerializer(read_only=True)
 
-    ingredients = IngredientInResipeSerializer(
+    ingredients = IngredientInRecipeSerializer(
         many=True,
         read_only=True,
         source='ingredients_in_recipe',
@@ -85,3 +87,158 @@ class RecipeSerializer(serializers.ModelSerializer):
         return ShoppingCart.objects.filter(
             user=request.user, recipe__id=obj.id
         ).exists()
+
+
+class CreateIngredientInRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        source=Ingredient,
+        queryset=Ingredient.objects.all()
+    )
+
+    class Meta:
+        model = IngredientInRecipe
+        fields = ('id', 'amount',)
+
+    def validate_amount(self, data):
+        if not 1 < int(data) < 2147483647:
+            raise serializers.ValidationError({
+                'ingredients': (
+                    'Количество должно быть больше 1 и меньше 2147483647'
+                ),
+                'msg': data
+            })
+        return data
+
+    def create(self, validated_data):
+        return IngredientInRecipe.objects.create(
+            ingredient=validated_data.get('id'),
+            amount=validated_data.get('amount')
+        )
+
+
+class CreateRecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(use_url=True, max_length=None)
+    author = UserSerializer(read_only=True)
+    ingredients = CreateIngredientInRecipeSerializer(many=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True
+    )
+    cooking_time = serializers.IntegerField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'author',
+            'ingredients',
+            'image',
+            'tags',
+            'name',
+            'text',
+            'cooking_time',
+        )
+
+    def create_ingredients(self, recipe, ingredients):
+        IngredientInRecipe.objects.bulk_create(
+            [
+                IngredientInRecipe(
+                    recipe=recipe,
+                    ingredient=ingredient['ingredient'],
+                    amount=ingredient['amount'],
+                ) for ingredient in ingredients
+            ]
+        )
+
+    @transaction.atomic
+    def create(self, validated_data):
+        request = self.context.get('request')
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = Recipe.objects.create(
+            author=request.user,
+            **validated_data
+        )
+        self.create_ingredients(recipe, ingredients)
+        recipe.tags.set(tags)
+        return recipe
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        recipe = instance
+        IngredientInRecipe.objects.filter(recipe=recipe).delete()
+        self.create_ingredients(recipe, ingredients)
+        return super().update(recipe, validated_data)
+
+    def to_representation(self, instance):
+        return RecipeSerializer(
+            instance,
+            context={
+                'request': self.context.get('request'),
+            }
+        ).data
+
+
+class ShortInfoRecipe(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_tame',
+        )
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShoppingCart
+        fields = (
+            'recipe',
+            'user',
+        )
+
+    def validate(self, data):
+        request = self.context.get('request')
+        recipe = data['recipe']
+        if ShoppingCart.objects.filter(
+            user=request.user, recipe=recipe
+        ).exists():
+            raise serializers.ValidationError(
+                {'errors': 'Этот рецепт уже в корзине!'}
+            )
+        return data
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return ShortInfoRecipe(instance.recipe, context=context).data
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """ Сериализатор для модели Favorite."""
+
+    class Meta:
+        model = Favorite
+        fields = (
+            'user',
+            'recipe',
+        )
+
+    def validate(self, data):
+        request = self.context.get('request')
+        if not request or request.user.is_anonymous:
+            return False
+        recipe = data['recipe']
+        if Favorite.objects.filter(
+            user=request.user, recipe=recipe
+        ).exists():
+            raise serializers.ValidationError(
+                {'errors': 'Рецепт уже в избранном'}
+            )
+        return data
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return ShortInfoRecipe(instance.recipe, context=context).data
