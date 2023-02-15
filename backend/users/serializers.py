@@ -1,7 +1,10 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from .models import User, Follow
+from .models import Follow
+
+User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -10,9 +13,14 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name',
-                  'last_name', 'is_subscribed'
-                  )
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+        )
         extra_kwargs = {
             'password': {'write_only': True, 'required': True},
         }

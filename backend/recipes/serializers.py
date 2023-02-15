@@ -1,10 +1,15 @@
+from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from drf_base64.fields import Base64ImageField
 
+from users.models import Follow
+from users.serializers import UserSerializer
 from .models import (Tag, Ingredient, Recipe, IngredientInRecipe, Favorite,
                      ShoppingCart)
-from users.serializers import UserSerializer
+
+User = get_user_model()
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -242,3 +247,71 @@ class FavoriteSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         context = {'request': request}
         return ShortInfoRecipe(instance.recipe, context=context).data
+
+
+class FollowListSerializer(serializers.ModelSerializer):
+    recipes = serializers.SerializerMethodField()
+    recipe_count = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
+        )
+
+    def get_recipes(self, author):
+        queryset = self.context.get('request')
+        return ShortInfoRecipe(
+            Recipe.objects.filter(author=author),
+            many=True,
+            context={'request': queryset}
+        ).data
+
+    def get_recipe_count(self, author):
+        return Recipe.objects.filter(author=author).count()
+
+    def get_is_subscribed(self, author):
+        return Follow.objects.filter(
+            user=self.context.get('request').user,
+            author=author
+        ).exists()
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Follow"""
+
+    class Meta:
+        model = Follow
+        fields = (
+            'user',
+            'author',
+        )
+
+    def validate(self, data):
+        get_object_or_404(User, username=data['username'])
+        if self.context['request'].user == data['author']:
+            raise serializers.ValidationError(
+                {'errors': 'Нельзя подписаться на самого себя!'}
+            )
+        if Follow.objects.filter(
+            user=self.context['request'].user,
+            author=data['author']
+        ):
+            raise serializers.ValidationError(
+                {'errors': 'Уже подписан на автора!'}
+            )
+        return data
+
+    def to_representation(self, instance):
+        return FollowListSerializer(
+            instance.author,
+            context={'request': self.context.get('request')}
+        ).data
