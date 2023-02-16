@@ -5,7 +5,7 @@ from rest_framework import serializers
 from drf_base64.fields import Base64ImageField
 
 from users.models import Follow
-from users.serializers import UserSerializer
+from users.serializers import UsersSerializer
 from .models import (Tag, Ingredient, Recipe, IngredientInRecipe, Favorite,
                      ShoppingCart)
 
@@ -52,7 +52,7 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe."""
     tags = TagSerializer(many=True, read_only=True)
-    author = UserSerializer(read_only=True)
+    author = UsersSerializer(read_only=True)
 
     ingredients = IngredientInRecipeSerializer(
         many=True,
@@ -123,7 +123,7 @@ class CreateIngredientInRecipeSerializer(serializers.ModelSerializer):
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(use_url=True, max_length=None)
-    author = UserSerializer(read_only=True)
+    author = UsersSerializer(read_only=True)
     ingredients = CreateIngredientInRecipeSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
