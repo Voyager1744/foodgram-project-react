@@ -13,5 +13,10 @@ class UsersViewSet(UserViewSet):
     serializer_class = UsersSerializer
     queryset = User.objects.all()
 
+    @action(detail=False)
+    def me(self, request):
+        user = User.objects.filter(id=request.user.id)
+        serializer = UsersSerializer(user, many=True)
+        return Response(*serializer.data)
 
 
