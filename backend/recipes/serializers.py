@@ -251,7 +251,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 class FollowListSerializer(serializers.ModelSerializer):
     recipes = serializers.SerializerMethodField()
-    recipe_count = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -275,7 +275,7 @@ class FollowListSerializer(serializers.ModelSerializer):
             context={'request': queryset}
         ).data
 
-    def get_recipe_count(self, author):
+    def get_recipes_count(self, author):
         return Recipe.objects.filter(author=author).count()
 
     def get_is_subscribed(self, author):
@@ -296,7 +296,7 @@ class FollowSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        get_object_or_404(User, username=data['username'])
+        get_object_or_404(User, username=data['author'])
         if self.context['request'].user == data['author']:
             raise serializers.ValidationError(
                 {'errors': 'Нельзя подписаться на самого себя!'}
