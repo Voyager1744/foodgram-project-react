@@ -13,7 +13,8 @@ class UserAdmin(admin.ModelAdmin):
         'last_name'
     )
     list_display_links = ('id', 'username')
-    search_fields = ('username',)
+    search_fields = ('username', 'email')
+    list_filter = ('username', 'email')
 
 
 @admin.register(Follow)
