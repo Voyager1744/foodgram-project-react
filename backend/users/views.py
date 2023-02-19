@@ -2,13 +2,13 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import status
-from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .serializers import UserSerializer, UsersSerializer
 from recipes.serializers import FollowListSerializer, FollowSerializer
+
 from .models import Follow
+from .serializers import UsersSerializer
 
 User = get_user_model()
 
@@ -54,4 +54,3 @@ class UsersViewSet(UserViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
