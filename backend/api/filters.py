@@ -3,7 +3,7 @@ from django_filters.rest_framework.filters import (AllValuesMultipleFilter,
                                                    BooleanFilter)
 from rest_framework.filters import SearchFilter
 
-from .models import Recipe
+from recipes.models import Recipe
 
 
 class IngredientSearchFilter(SearchFilter):

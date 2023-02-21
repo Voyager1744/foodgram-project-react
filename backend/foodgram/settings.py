@@ -25,7 +25,12 @@ SECRET_KEY = 'ny!5oof#js%h$z8hv1!7-#7jv+8sunb51vzq97xkimps@h0pij'  # FIXME
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+    'testserver',
+]
 
 # Application definition
 
@@ -36,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'api.apps.ApiConfig',
     'recipes.apps.RecipesConfig',
     'rest_framework',
     'rest_framework.authtoken',
@@ -120,6 +126,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
@@ -141,8 +149,8 @@ SIMPLE_JWT = {
 DJOSER = {
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        'user': 'users.serializers.UsersSerializer',
-        'current_user': 'users.serializers.UsersSerializer',
+        'user': 'api.serializers.UsersSerializer',
+        'current_user': 'api.serializers.UsersSerializer',
     },
     'PERMISSIONS': {
         'user_list': ['rest_framework.permissions.AllowAny'],

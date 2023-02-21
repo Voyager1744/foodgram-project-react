@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
+MAX_AMOUNT = 10000
+MAX_COOKING_TIME = 1440
 MIN_AMOUNT = 1
 MIN_COOKING_TIME = 1
 
@@ -15,6 +17,7 @@ class Tag(models.Model):
     slug: str = models.SlugField('Slug', max_length=200, unique=True)
 
     class Meta:
+        ordering = ('name',)
         verbose_name: str = 'Тег'
         verbose_name_plural: str = 'Теги'
 
@@ -31,7 +34,7 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ('name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
 
@@ -75,6 +78,10 @@ class Recipe(models.Model):
             MinValueValidator(
                 MIN_COOKING_TIME,
                 message=f'Время должно быть больше {MIN_COOKING_TIME}'
+            ),
+            MaxValueValidator(
+                MAX_COOKING_TIME,
+                message='Дольше суток никто готовить не будет!'
             )
         ],
         default=MIN_COOKING_TIME
@@ -102,6 +109,10 @@ class IngredientInRecipe(models.Model):
             MinValueValidator(
                 MIN_AMOUNT,
                 message=f'Количество продукта должно быть больше {MIN_AMOUNT}'
+            ),
+            MaxValueValidator(
+                MAX_AMOUNT,
+                message=f'Больше {MAX_AMOUNT} нам не приготовить!'
             )
         ],
         default=MIN_AMOUNT
@@ -113,6 +124,7 @@ class IngredientInRecipe(models.Model):
     )
 
     class Meta:
+        ordering = ('ingredient',)
         default_related_name = 'ingredients_in_recipe'
         constraints = (
             models.UniqueConstraint(fields=('recipe', 'ingredient',),
@@ -160,6 +172,7 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
+        ordering = ('user',)
         constraints = (
             models.UniqueConstraint(
                 fields=('user', 'recipe'),
