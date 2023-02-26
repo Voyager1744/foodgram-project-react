@@ -131,3 +131,6 @@ dmypy.json
 # .idea
 .idea
 /backend/recipes/images/
+
+/backend/static/
+/backend/media/
