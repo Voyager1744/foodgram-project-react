@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.filters import IngredientSearchFilter, RecipeFilterSet
+from api.pagination import CustomPagination
 from api.permissions import IsAuthorOrAdminOrReadOnly
 from api.serializers import (CreateRecipeSerializer, FavoriteSerializer,
                              FollowListSerializer, FollowSerializer,
@@ -28,6 +29,7 @@ User = get_user_model()
 class UsersViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
+    pagination_class = CustomPagination
 
     @action(detail=False)
     def me(self, request):
@@ -88,6 +90,7 @@ class RecipeViewSet(ModelViewSet):
     """Отображение модели Recipes."""
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    pagination_class = CustomPagination
     permission_classes = (
         IsAuthorOrAdminOrReadOnly,
         permissions.IsAuthenticatedOrReadOnly
