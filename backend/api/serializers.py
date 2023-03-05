@@ -3,11 +3,10 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer
 from drf_base64.fields import Base64ImageField
-from rest_framework import serializers
-from rest_framework.fields import SerializerMethodField
-
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
+from rest_framework import serializers
+from rest_framework.fields import SerializerMethodField
 from users.models import Follow
 
 User = get_user_model()
