@@ -1,34 +1,73 @@
-# FOODGRAM - "Продуктовый помошник"
-## Дипломная работа после прохождения курса Python-разработчик в Яндекс.Практикум
+# FOODGRAM - "Продуктовый помощник"
+## Дипломный проект по окончанию курса Python-разработчик в Яндекс.Практикум
 
-сайт работает по адресу http://158.160.61.133/
-логин admin@ex.com
-пароль admin
+В этом проекте мной написаны онлайн-сервис и API для сайта "Продуктовый
+помощник", а именно:
 
-Технологии:
+- регистрация и авторизация пользователей,
+- публикация и редактирование рецептов авторизованным пользователем,
+- добавление в избранное понравившегося рецепта,
+- возможность подписаться на любимого автора,
+- реализована фильтрация рецептов по тегам,
+- добавление рецептов в корзину покупок,
+- возможность скачать список ингредиентов всех рецептов добавленных в корзину.
+- несколько unit-тестов
 
-* python 3.10
-* django 2.2.19
 
-Для запуска в режиме разработки необходимо:
 
-1. Клонировать с github
-2. Создать виртуальное окружение  `python -m venv venv`
-3. Активировать виртуальное окружение `source venv/Scripts/activate`
-4. Обновить менеджер пакетов pip `python -m pip install --upgrade pip`
-5. Установить зависимости `pip install -r requirements.txt`
+В проекте использованы следующие технологии:
 
-...
+* Python 3.10
+* Django 2.2.19
+* Django REST framework
+* PostgreSQL
+* NGINX
+* gunicorn
+* Docker
+* DockerHub
+* GitHub Actions
+* Yandex.Cloud
 
-Для запуска на удаленном сервере:
-1. Добавить ваш публичный SSH-ключ на сервер `cat ~/.ssh/id_rsa.pub`
-2. Подключиться к удаленному серверу `ssh your_login@pu.bl.ic.ip`
-3. Обновить индекс пакетов APT `sudo apt update`
-4. Обновите установленные в системе пакеты и установите обновления безопасности `sudo apt upgrade -y `
-5. Установиь pip venv git `sudo apt install python3-pip python3-venv git -y`
-6. Сгенерировать SSH-ключ `ssh-keygen -t rsa` для клонирования
-7. Отредактировать setting: ALLOWED_HOSTS = ['xxx.xxx.xxx.xxx', '127.0.0.1', 'localhost'] — IP вашего сервера
-8. Отключите «режим разработки»
-9. ...
-10. для загрузки ингредиентов: `python manage.py load_ingredients`
+Проект реализован в Docker-контейнерах, образы которых размещены на Dockerhub.
+
+#### Для запуска на сервере необходимо:
+
+1. Установить Docker
+2. Скопировать папку _infra_ на сервер
+3. Добавить в эту папку файл _.env_. Пример содержимого:
+
+    ```
+        DB_ENGINE=django.db.backends.postgresql
+        DB_NAME=postgres
+        POSTGRES_USER=postgres
+        POSTGRES_PASSWORD=postgres
+        DB_HOST=db
+        DB_PORT=5432
+    ```
+4. В файле nginx.conf указать:
+
+    ```nginx configuration
+    server_name xxx.xxx.xxx.xxx;
+    ```
+   где xxx.xxx.xxx.xxx - IP адрес сервера, или _localhost_
+5. Из директории _infra_ выполнить команду `sudo docker-compose up -d`
+6. Последовательно выполнить следующие команды:
+
+    ```
+    sudo docker exec infra_web_1 python manage.py makemigrations
+    sudo docker exec infra_web_1 python manage.py migrate
+    sudo docker exec infra_web_1 python manage.py collectstatic
+    # создать суперпользователя:
+    sudo docker exec infra_web_1 python manage.py createsuperuser --username admin --email admin@ex.com
+    ```
+7. Загрузить список ингредиентов:
+
+    ```
+    sudo docker exec infra_web_1 python manage.py load_ingredients
+    ```
+
+***
+Автор: [Ушаков Дмитрий](https://github.com/Voyager1744/)
+
+
 
