@@ -27,6 +27,7 @@
 * DockerHub
 * GitHub Actions
 * Yandex.Cloud
+* Linux (Ubuntu)
 
 Проект реализован в Docker-контейнерах, образы которых размещены на Dockerhub.
 
